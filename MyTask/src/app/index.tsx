@@ -709,7 +709,7 @@ export default function HomeScreen() {
         ================================================== */}
 
         <Text style={styles.footer}>
-          MY TASK · Stay organized ♡
+          MY TASK · JUTAMAS ANUMATS 66112366 ♡
         </Text>
 
       </ScrollView>
