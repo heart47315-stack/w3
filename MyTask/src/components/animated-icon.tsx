@@ -1,148 +1,266 @@
-import { Image } from 'expo-image';
+// My Task - Animated Splash Screen
+// หน้าที่ของไฟล์นี้:
+// 1. แสดงหน้า Splash Screen ตอนเปิด Application
+// 2. แสดงโลโก้ My Task
+// 3. ทำ Animation ตอนเปิดแอป
+// 4. ซ่อน Splash Screen แล้วเข้าสู่หน้า Application
+// ============================================================
+
 import * as SplashScreen from 'expo-splash-screen';
 import { useState } from 'react';
-import { Dimensions, StyleSheet, View } from 'react-native';
-import Animated, { Easing, Keyframe } from 'react-native-reanimated';
-import { scheduleOnRN } from 'react-native-worklets';
+import { StyleSheet, Text, View } from 'react-native';
+import Animated, {
+  Easing,
+  FadeIn,
+  FadeOut,
+  ZoomIn,
+} from 'react-native-reanimated';
 
-const INITIAL_SCALE_FACTOR = Dimensions.get('screen').height / 90;
+// ============================================================
+// ระยะเวลา Animation
+// ============================================================
+
 const DURATION = 600;
 
+// ============================================================
+// AnimatedSplashOverlay
+// ------------------------------------------------------------
+// Component นี้จะแสดงหน้า Splash ตอนเปิด Application
+// ============================================================
+
 export function AnimatedSplashOverlay() {
-  const [animate, setAnimate] = useState(false);
+
+  // ใช้ State ควบคุมการแสดง Splash Screen
+
   const [visible, setVisible] = useState(true);
 
-  if (!visible) return null;
+  // ถ้า Animation จบแล้วไม่ต้องแสดง Splash
 
-  const splashKeyframe = new Keyframe({
-    0: {
-      transform: [{ scale: 1 }],
-      opacity: 1,
-    },
-    20: {
-      opacity: 1,
-    },
-    70: {
-      opacity: 0,
-      easing: Easing.elastic(0.7),
-    },
-    100: {
-      opacity: 0,
-      transform: [{ scale: 1 }],
-      easing: Easing.elastic(0.7),
-    },
-  });
+  if (!visible) {
+    return null;
+  }
 
-  const image = <Image style={styles.image} source={require('@/assets/images/expo-logo.png')} />;
-
-  return animate ? (
+  return (
     <Animated.View
-      entering={splashKeyframe.duration(DURATION).withCallback((finished) => {
-        'worklet';
-        if (finished) {
-          scheduleOnRN(setVisible, false);
-        }
-      })}
-      style={styles.splashOverlay}>
-      {image}
-    </Animated.View>
-  ) : (
-    <View
+      entering={FadeIn.duration(300)}
+      exiting={FadeOut.duration(300)}
       onLayout={() => {
-        SplashScreen.hideAsync().finally(() => {
-          setAnimate(true);
-        });
+
+        // ====================================================
+        // เมื่อ Layout พร้อมแล้ว
+        // ให้ซ่อน Native Splash Screen
+        // ====================================================
+
+        SplashScreen.hideAsync();
+
+        // ====================================================
+        // รอ Animation เล็กน้อย
+        // แล้วปิด Overlay
+        // ====================================================
+
+        setTimeout(() => {
+          setVisible(false);
+        }, DURATION + 200);
       }}
-      style={styles.splashOverlay}>
-      {image}
-    </View>
+      style={styles.splashOverlay}
+    >
+
+      {/* ====================================================
+          Logo Container
+      ==================================================== */}
+
+      <Animated.View
+        entering={ZoomIn
+          .duration(DURATION)
+          .easing(Easing.out(Easing.back(1.5)))}
+        style={styles.logoContainer}
+      >
+
+        {/* ==================================================
+            เครื่องหมาย Check
+            ใช้แทน Logo ของ My Task
+        ================================================== */}
+
+        <Text style={styles.checkIcon}>
+          ✓
+        </Text>
+
+      </Animated.View>
+
+      {/* ====================================================
+          ชื่อ Application
+      ==================================================== */}
+
+      <Animated.Text
+        entering={FadeIn
+          .delay(250)
+          .duration(400)}
+        style={styles.logoText}
+      >
+        MY TASK
+      </Animated.Text>
+
+      {/* ====================================================
+          คำอธิบายใต้ Logo
+      ==================================================== */}
+
+      <Animated.Text
+        entering={FadeIn
+          .delay(350)
+          .duration(400)}
+        style={styles.tagline}
+      >
+        Stay organized. Stay productive.
+      </Animated.Text>
+
+    </Animated.View>
   );
 }
 
-const keyframe = new Keyframe({
-  0: {
-    transform: [{ scale: INITIAL_SCALE_FACTOR }],
-  },
-  100: {
-    transform: [{ scale: 1 }],
-    easing: Easing.elastic(0.7),
-  },
-});
-
-const logoKeyframe = new Keyframe({
-  0: {
-    transform: [{ scale: 1.3 }],
-    opacity: 0,
-  },
-  40: {
-    transform: [{ scale: 1.3 }],
-    opacity: 0,
-    easing: Easing.elastic(0.7),
-  },
-  100: {
-    opacity: 1,
-    transform: [{ scale: 1 }],
-    easing: Easing.elastic(0.7),
-  },
-});
-
-const glowKeyframe = new Keyframe({
-  0: {
-    transform: [{ rotateZ: '0deg' }],
-  },
-  100: {
-    transform: [{ rotateZ: '7200deg' }],
-  },
-});
+// ============================================================
+// AnimatedIcon
+// ------------------------------------------------------------
+// Component นี้ยังเก็บไว้เพื่อป้องกันไฟล์อื่นที่อาจเรียกใช้
+// แต่เปลี่ยนจาก Expo Logo เป็น My Task Logo
+// ============================================================
 
 export function AnimatedIcon() {
   return (
     <View style={styles.iconContainer}>
-      <Animated.View entering={glowKeyframe.duration(60 * 1000 * 4)} style={styles.glow}>
-        <Image style={styles.glow} source={require('@/assets/images/logo-glow.png')} />
-      </Animated.View>
 
-      <Animated.View entering={keyframe.duration(DURATION)} style={styles.background} />
-      <Animated.View style={styles.imageContainer} entering={logoKeyframe.duration(DURATION)}>
-        <Image style={styles.image} source={require('@/assets/images/expo-logo.png')} />
-      </Animated.View>
+      {/* วงกลมพื้นหลัง */}
+
+      <View style={styles.iconBackground}>
+
+        {/* เครื่องหมาย Check */}
+
+        <Text style={styles.iconCheck}>
+          ✓
+        </Text>
+
+      </View>
+
     </View>
   );
 }
 
+// ============================================================
+// StyleSheet
+// ============================================================
+
 const styles = StyleSheet.create({
-  imageContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  glow: {
-    width: 201,
-    height: 201,
-    position: 'absolute',
-  },
-  iconContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: 128,
-    height: 128,
-    zIndex: 100,
-  },
-  image: {
-    width: 76,
-    height: 71,
-  },
-  background: {
-    borderRadius: 40,
-    experimental_backgroundImage: `linear-gradient(180deg, #3C9FFE, #0274DF)`,
-    width: 128,
-    height: 128,
-    position: 'absolute',
-  },
+  // ==========================================================
+  // Splash Screen
+  // ==========================================================
+
   splashOverlay: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: '#208AEF',
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+
+    backgroundColor: '#6C5CE7',
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 1000,
   },
+
+  // ==========================================================
+  // Logo Container
+  // ==========================================================
+
+  logoContainer: {
+    width: 100,
+    height: 100,
+
+    borderRadius: 30,
+
+    backgroundColor: '#FFFFFF',
+
+    alignItems: 'center',
+    justifyContent: 'center',
+
+    // เงาสำหรับ Web
+
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 15,
+
+    elevation: 8,
+  },
+
+  // ==========================================================
+  // Check Icon
+  // ==========================================================
+
+  checkIcon: {
+    fontSize: 52,
+    fontWeight: '900',
+    color: '#6C5CE7',
+  },
+
+  // ==========================================================
+  // Application Name
+  // ==========================================================
+
+  logoText: {
+    marginTop: 22,
+
+    fontSize: 24,
+    fontWeight: '900',
+
+    letterSpacing: 5,
+
+    color: '#FFFFFF',
+  },
+
+  // ==========================================================
+  // Tagline
+  // ==========================================================
+
+  tagline: {
+    marginTop: 8,
+
+    fontSize: 12,
+
+    letterSpacing: 1,
+
+    color: '#EEEAFE',
+  },
+
+  // ==========================================================
+  // AnimatedIcon
+  // ==========================================================
+
+  iconContainer: {
+    width: 128,
+    height: 128,
+
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  iconBackground: {
+    width: 110,
+    height: 110,
+
+    borderRadius: 30,
+
+    backgroundColor: '#6C5CE7',
+
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  iconCheck: {
+    fontSize: 55,
+    fontWeight: '900',
+    color: '#FFFFFF',
+  },
 });
+
